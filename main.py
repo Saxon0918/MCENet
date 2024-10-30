@@ -80,7 +80,6 @@ hyp_params.model = args.model
 hyp_params.output_dim = 1
 hyp_params.criterion = 'L1Loss'
 # hyp_params.criterion = 'CrossEntropyLoss'
-# this is test
-#sda
+
 if __name__ == '__main__':
     test_loss = train.initiate(hyp_params, train_loader, valid_loader, test_loader)
