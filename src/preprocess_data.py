@@ -11,7 +11,7 @@ sys.path.append("..")
 
 
 class ADNI_Dataset:
-    def __init__(self, random_seed=1, mode='train', split_ratio=(0.7, 0.1, 0.2)):
+    def __init__(self, random_seed=1, mode='train', group=0, split_ratio=(0.7, 0.1, 0.2)):
         self.mode = mode
         self.random_seed = random_seed
         mri = pd.read_csv('data/MRI.csv')  # MRI
@@ -21,33 +21,34 @@ class ADNI_Dataset:
         alldata = pd.read_csv('data/all_data.csv')  # All data
         same_id = av45.merge(mri, on='IID').merge(gene, on='IID').merge(fdg, on='IID').merge(alldata, on='IID')[['IID']]
         same_data = alldata.merge(same_id, on='IID')
-
-        # ------------AD vs CN------------
-        subset = same_data[same_data['diagnosis'].isin(['AD', 'CN']) | same_data['diagnosis'].isna()]
-        subset['label'] = subset['diagnosis'].map({'AD': 1, 'CN': 0, np.nan: -1}).fillna(-1).astype(int)
-        # ------------AD vs MCI------------
-        # subset = same_data[same_data['diagnosis'].isin(['AD', 'MCI']) | same_data['diagnosis'].isna()]
-        # subset['label'] = subset['diagnosis'].map({'AD': 1, 'MCI': 0, np.nan: -1}).fillna(-1).astype(int)
-        # ------------MCI vs CN------------
-        # subset = same_data[same_data['diagnosis'].isin(['MCI', 'CN']) | same_data['diagnosis'].isna()]
-        # subset['label'] = subset['diagnosis'].map({'MCI': 1, 'CN': 0, np.nan: -1}).fillna(-1).astype(int)
+        if group == 0:
+            # ------------AD vs. CN------------
+            subset = same_data[same_data['diagnosis'].isin(['AD', 'CN']) | same_data['diagnosis'].isna()]
+            subset['label'] = subset['diagnosis'].map({'AD': 1, 'CN': 0, np.nan: -1}).fillna(-1).astype(int)
+        elif group == 1:
+            # ------------AD vs. MCI------------
+            subset = same_data[same_data['diagnosis'].isin(['AD', 'MCI']) | same_data['diagnosis'].isna()]
+            subset['label'] = subset['diagnosis'].map({'AD': 1, 'MCI': 0, np.nan: -1}).fillna(-1).astype(int)
+        elif group == 2:
+            # ------------MCI vs. CN------------
+            subset = same_data[same_data['diagnosis'].isin(['MCI', 'CN']) | same_data['diagnosis'].isna()]
+            subset['label'] = subset['diagnosis'].map({'MCI': 1, 'CN': 0, np.nan: -1}).fillna(-1).astype(int)
+        else:
+            print("unknown groups")
 
         same_mri = mri[mri['IID'].isin(subset['IID'])]
         same_av45 = av45[av45['IID'].isin(subset['IID'])]
         same_fdg = fdg[fdg['IID'].isin(subset['IID'])]
         same_gene = gene[gene['IID'].isin(subset['IID'])]
-
         full_data = same_mri.merge(same_av45, on='IID', suffixes=('_mri', '_av45'))
         full_data = full_data.merge(same_fdg, on='IID', suffixes=('', '_fdg'))
         full_data = full_data.merge(same_gene, on='IID', suffixes=('', '_gene'))
         full_data = full_data.merge(subset[['IID', 'label']], on='IID')
-
         same_mri = full_data.iloc[:, 1:141]
         same_av45 = full_data.iloc[:, 141:281]
         same_fdg = full_data.iloc[:, 281:421]
         same_gene = full_data.iloc[:, 421:521]
         labels = full_data.iloc[:, 521].to_numpy().reshape(-1, 1)
-
         mri = same_mri.apply(lambda x: (x - x.mean()) / x.std()).fillna(0).to_numpy()
         av45 = same_av45.apply(lambda x: (x - x.mean()) / x.std()).fillna(0).to_numpy()
         fdg = same_fdg.apply(lambda x: (x - x.mean()) / x.std()).fillna(0).to_numpy()
@@ -84,7 +85,7 @@ class ADNI_Dataset:
 
 
 class ADNI_three_Dataset:
-    def __init__(self, random_seed=1, mode='train', split_ratio=(0.7, 0.1, 0.2)):
+    def __init__(self, random_seed=1, mode='train', group=0, split_ratio=(0.7, 0.1, 0.2)):
         self.mode = mode
         self.random_seed = random_seed
         mri = pd.read_csv('data/MRI.csv')  # MRI
@@ -95,9 +96,9 @@ class ADNI_three_Dataset:
         same_id = av45.merge(mri, on='IID').merge(gene, on='IID').merge(fdg, on='IID').merge(alldata, on='IID')[['IID']]
         same_data = alldata.merge(same_id, on='IID')
 
-        # three class: AD vs. MCI vs. CN
+        # ------------three class: AD vs. MCI vs. CN------------
         subset = same_data[same_data['diagnosis'].isin(['AD', 'MCI', 'CN']) | same_data['diagnosis'].isna()]
-        subset['label'] = subset['diagnosis'].map({'AD': 1, 'CN': 0, 'MCI': 2, np.nan: -1}).fillna(-1).astype(int)
+        subset['label'] = subset['diagnosis'].map({'CN': 0, 'AD': 1, 'MCI': 2, np.nan: -1}).fillna(-1).astype(int)
 
         same_mri = mri[mri['IID'].isin(subset['IID'])]
         same_av45 = av45[av45['IID'].isin(subset['IID'])]

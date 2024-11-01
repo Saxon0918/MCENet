@@ -4,7 +4,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import accuracy_score, roc_auc_score, confusion_matrix
-from src.eval_metrics import calculate_metric, compute_metrics
+from src.eval_metrics import calculate_metric, calculate_three_metric
 
 
 class MLP(nn.Module):
@@ -56,7 +56,7 @@ def train_and_evaluate(train_loader, valid_loader, model, criterion, optimizer, 
                 mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(
                     device), label.to(device)
                 outputs = model(mri, av45, fdg, gene)
-                compute_metrics(outputs, label)
+                calculate_three_metric(outputs, label)
 
 
 def evaluate_test(test_loader, model):
@@ -72,7 +72,7 @@ def evaluate_test(test_loader, model):
             mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(device), label.to(
                 device)
             outputs = model(mri, av45, fdg, gene)
-            compute_metrics(outputs, label)
+            calculate_three_metric(outputs, label)
 
 
 if __name__ == '__main__':

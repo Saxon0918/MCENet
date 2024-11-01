@@ -68,7 +68,10 @@ def train_model(settings, hyp_params, train_loader, valid_loader, test_loader):
     model = load_model(hyp_params, name=hyp_params.name)
     _, preds, labels = evaluate(model, criterion, test_loader, hyp_params, test=True)
 
-    calculate_metric(preds, labels)
+    if hyp_params.classes == 2:
+        calculate_metric(preds, labels)   # two class
+    else:
+        calculate_three_metric(preds, labels)  # three class
     sys.stdout.flush()
     input('[Press Any Key to start another run]')
 

@@ -23,6 +23,8 @@ parser.add_argument('--when', type=int, default=10, help='decay learning rate')
 parser.add_argument('--batch_chunk', type=int, default=1, help='number of chunks per batch')
 parser.add_argument('--log_interval', type=int, default=4, help='frequency of result logging')
 parser.add_argument('--seed', type=int, default=11111, help='random seed')
+parser.add_argument('--classes', type=int, default=2, help='the number of class 2 or 3')
+parser.add_argument('--group', type=int, default=0, help='different group')
 parser.add_argument('--no_cuda', action='store_true')
 parser.add_argument('--name', type=str, default='MCIE')
 
@@ -51,14 +53,18 @@ if torch.cuda.is_available():
         use_cuda = True
 
 # ---------------------Load dataset---------------------
-train_data = ADNI_Dataset(random_seed=args.seed, mode='train')
-valid_data = ADNI_Dataset(random_seed=args.seed, mode='val')
-test_data = ADNI_Dataset(random_seed=args.seed, mode='test')
-
-# three class
-# train_data = ADNI_three_Dataset(random_seed=args.seed, mode='train')
-# valid_data = ADNI_three_Dataset(random_seed=args.seed, mode='val')
-# test_data = ADNI_three_Dataset(random_seed=args.seed, mode='test')
+if args.classes == 2:
+    # two class
+    train_data = ADNI_Dataset(random_seed=args.seed, mode='train', group=args.group)
+    valid_data = ADNI_Dataset(random_seed=args.seed, mode='val', group=args.group)
+    test_data = ADNI_Dataset(random_seed=args.seed, mode='test', group=args.group)
+elif args.classes == 3:
+    # three class
+    train_data = ADNI_three_Dataset(random_seed=args.seed, mode='train', group=args.group)
+    valid_data = ADNI_three_Dataset(random_seed=args.seed, mode='val', group=args.group)
+    test_data = ADNI_three_Dataset(random_seed=args.seed, mode='test', group=args.group)
+else:
+    print("unknown classes")
 
 if torch.cuda.is_available():
     g_cuda = torch.Generator(device='cuda')
@@ -77,9 +83,8 @@ hyp_params.when = args.when
 hyp_params.batch_chunk = args.batch_chunk
 hyp_params.n_train, hyp_params.n_valid, hyp_params.n_test = len(train_data), len(valid_data), len(test_data)
 hyp_params.model = args.model
-hyp_params.output_dim = 1
-hyp_params.criterion = 'L1Loss'
-# hyp_params.criterion = 'CrossEntropyLoss'
+hyp_params.output_dim = 1 if args.classes == 2 else 3
+hyp_params.criterion = 'L1Loss' if args.classes == 2 else 'CrossEntropyLoss'
 
 if __name__ == '__main__':
     test_loss = train.initiate(hyp_params, train_loader, valid_loader, test_loader)
