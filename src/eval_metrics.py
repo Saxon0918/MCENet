@@ -17,14 +17,11 @@ def calculate_metric(preds, labels):
     optimal_idx = J.argmax()
     optimal_threshold = thresholds[optimal_idx]
     binary_predict = [1 if p >= optimal_threshold else 0 for p in preds]
-
     accuracy = accuracy_score(labels, binary_predict)  # ACC
     auc = roc_auc_score(labels, preds)  # AUC
-
     tn, fp, fn, tp = confusion_matrix(labels, binary_predict).ravel()
     sensitivity = tp / (tp + fn)  # SEN
     specificity = tn / (tn + fp)  # SPE
-
     print(f"Accuracy: {accuracy}")
     print(f"AUC: {auc}")
     print(f"Optimal Threshold: {optimal_threshold}")
