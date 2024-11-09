@@ -41,29 +41,9 @@ def train_model(settings, hyp_params, train_loader, valid_loader, test_loader):
         print("-" * 50)
 
         if val_loss < best_valid:
-            print(f"Saved model at pre_trained_models/{hyp_params.name}.pt!")
+            print(f"Saved model at trained_models/{hyp_params.name}.pt!")
             save_model(hyp_params, model, name=hyp_params.name)
             best_valid = val_loss
-
-            # linear_weightm = model.proj_m.weight.detach().cpu().numpy()  # 使用detach()并移回CPU
-            # # 使用pandas将权重保存为CSV文件
-            # dfm = pd.DataFrame(linear_weightm)
-            # dfm.to_csv('data/linear_m.csv', index=False)
-            #
-            # linear_weighta = model.proj_a.weight.detach().cpu().numpy()  # 使用detach()并移回CPU
-            # # 使用pandas将权重保存为CSV文件
-            # dfa = pd.DataFrame(linear_weighta)
-            # dfa.to_csv('data/linear_a.csv', index=False)
-            #
-            # linear_weightf = model.proj_f.weight.detach().cpu().numpy()  # 使用detach()并移回CPU
-            # # 使用pandas将权重保存为CSV文件
-            # dff = pd.DataFrame(linear_weightf)
-            # dff.to_csv('data/linear_f.csv', index=False)
-            #
-            # linear_weightg = model.proj_g.weight.detach().cpu().numpy()  # 使用detach()并移回CPU
-            # # 使用pandas将权重保存为CSV文件
-            # dfg = pd.DataFrame(linear_weightg)
-            # dfg.to_csv('data/linear_g.csv', index=False)
 
     model = load_model(hyp_params, name=hyp_params.name)
     _, preds, labels = evaluate(model, criterion, test_loader, hyp_params, test=True)
