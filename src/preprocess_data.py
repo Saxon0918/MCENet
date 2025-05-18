@@ -153,3 +153,63 @@ class ADNI_three_Dataset:
             'gene': torch.tensor(self.gene[idx], dtype=torch.float32),
             'label': torch.tensor(self.label[idx], dtype=torch.float32)
         }
+
+class My_Dataset:
+    def __init__(self, random_seed=1, mode='train', group=0, split_ratio=(0.7, 0.1, 0.2)):
+        self.mode = mode
+        self.random_seed = random_seed
+        mri = pd.read_csv('data/my_MRI.csv')  # MRI
+        ct = pd.read_csv('data/my_CT.csv')  # CT
+        clinical = pd.read_csv('data/my_clinical.csv')  # clinical result
+        alldata = pd.read_csv('data/my_all_data.csv')  # All data
+        same_id = ct.merge(mri, on='IID').merge(clinical, on='IID').merge(alldata, on='IID')[['IID']]
+        same_data = alldata.merge(same_id, on='IID')
+        if group == 0:
+            # ------------AD vs. CN------------
+            subset = same_data[same_data['diagnosis'].isin(['AD', 'CN']) | same_data['diagnosis'].isna()]
+            subset['label'] = subset['diagnosis'].map({'AD': 1, 'CN': 0, np.nan: -1}).fillna(-1).astype(int)
+        else:
+            print("unknown groups")
+
+        same_mri = mri[mri['IID'].isin(subset['IID'])]
+        same_ct = ct[ct['IID'].isin(subset['IID'])]
+        same_clinical = clinical[clinical['IID'].isin(subset['IID'])]
+
+        full_data = same_mri.merge(same_ct, on='IID', suffixes=('_mri', '_ct'))
+        full_data = full_data.merge(same_clinical, on='IID', suffixes=('', '_clinical'))
+        full_data = full_data.merge(subset[['IID', 'label']], on='IID')
+        same_mri = full_data.iloc[:, 1:141]
+        same_ct = full_data.iloc[:, 141:281]
+        same_clinical = full_data.iloc[:, 281:291]
+        labels = full_data.iloc[:, 291].to_numpy().reshape(-1, 1)
+        mri = same_mri.apply(lambda x: (x - x.mean()) / x.std()).fillna(0).to_numpy()
+        ct = same_ct.apply(lambda x: (x - x.mean()) / x.std()).fillna(0).to_numpy()
+        clinical = same_clinical.apply(lambda x: (x - x.mean()) / x.std()).fillna(0).to_numpy()
+
+        mri_train, mri_temp, ct_train, ct_temp, clinical_train, clinical_temp, y_train, y_temp = \
+            train_test_split(mri, ct, clinical, labels, test_size=(1 - split_ratio[0]),
+                             random_state=self.random_seed)
+        val_size = split_ratio[1] / (split_ratio[1] + split_ratio[2])
+        mri_val, mri_test, ct_val, ct_test, clinical_val, clinical_test, y_val, y_test = \
+            train_test_split(mri_temp, ct_temp, clinical_temp, y_temp, test_size=(1 - val_size),
+                             random_state=self.random_seed)
+
+        if self.mode == 'train':
+            self.mri, self.ct, self.clinical, self.label = mri_train, ct_train, clinical_train, y_train
+        elif self.mode == 'val':
+            self.mri, self.ct, self.clinical, self.label = mri_val, ct_val, clinical_val, y_val
+        elif self.mode == 'test':
+            self.mri, self.ct, self.clinical, self.label = mri_test, ct_test, clinical_test, y_test
+        else:
+            raise ValueError("invalid data")
+
+    def __len__(self):
+        return len(self.label)
+
+    def __getitem__(self, idx):
+        return {
+            'mri': torch.tensor(self.mri[idx], dtype=torch.float32),
+            'ct': torch.tensor(self.ct[idx], dtype=torch.float32),
+            'clinical': torch.tensor(self.clinical[idx], dtype=torch.float32),
+            'label': torch.tensor(self.label[idx], dtype=torch.float32)
+        }

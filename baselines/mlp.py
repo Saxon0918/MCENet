@@ -1,4 +1,4 @@
-from src.preprocess_data import ADNI_Dataset, ADNI_three_Dataset
+from src.preprocess_data import ADNI_Dataset, ADNI_three_Dataset, My_Dataset
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
@@ -10,12 +10,13 @@ from src.eval_metrics import calculate_metric, calculate_three_metric
 class MLP(nn.Module):
     def __init__(self):
         super(MLP, self).__init__()
-        self.fc1 = nn.Linear(140 + 140 + 140 + 100, 256)
+        # self.fc1 = nn.Linear(140 + 140 + 140 + 100, 256)
+        self.fc1 = nn.Linear(140 + 140 + 10, 256)
         self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 3)
+        self.fc3 = nn.Linear(128, 1)
 
-    def forward(self, mri, av45, gene, fdg):
-        x = torch.cat([mri, av45, gene, fdg], dim=1)  # 拼接输入
+    def forward(self, mri, av45, gene):
+        x = torch.cat([mri, av45, gene], dim=1)
         x = torch.relu(self.fc1(x))
         x = torch.relu(self.fc2(x))
         x = self.fc3(x)
@@ -29,34 +30,53 @@ def train_and_evaluate(train_loader, valid_loader, model, criterion, optimizer, 
 
         for i_batch, data in enumerate(train_loader):
             mri = data['mri']
-            av45 = data['av45']
-            fdg = data['fdg']
-            gene = data['gene']
+            # av45 = data['av45']
+            # fdg = data['fdg']
+            # gene = data['gene']
+            # label = data['label']
+            # mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(device), label.to(
+            #     device)
+            #
+            # optimizer.zero_grad()
+            # outputs = model(mri, av45, fdg, gene)
+            # loss = criterion(outputs, label)
+            # loss.backward()
+            # optimizer.step()
+            # train_loss += loss.item()
+
+            ct = data['ct']
+            clinical = data['clinical']
             label = data['label']
-            mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(device), label.to(
-                device)
+            mri, ct, clinical, label = mri.to(device), ct.to(device), clinical.to(device), label.to(device)
 
             optimizer.zero_grad()
-            outputs = model(mri, av45, fdg, gene)
+            outputs = model(mri, ct, clinical)
             loss = criterion(outputs, label)
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
 
-        # 验证模型
+
         model.eval()
         with torch.no_grad():
             for i_batch, data in enumerate(valid_loader):
                 mri = data['mri']
-                av45 = data['av45']
-                fdg = data['fdg']
-                gene = data['gene']
-                label = data['label']
+                # av45 = data['av45']
+                # fdg = data['fdg']
+                # gene = data['gene']
+                # label = data['label']
+                #
+                # mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(
+                #     device), label.to(device)
+                # outputs = model(mri, av45, fdg, gene)
+                # calculate_three_metric(outputs, label)
 
-                mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(
-                    device), label.to(device)
-                outputs = model(mri, av45, fdg, gene)
-                calculate_three_metric(outputs, label)
+                ct = data['ct']
+                clinical = data['clinical']
+                label = data['label']
+                mri, ct, clinical, label = mri.to(device), ct.to(device), clinical.to(device), label.to(device)
+                outputs = model(mri, ct, clinical)
+                calculate_metric(outputs, label)
 
 
 def evaluate_test(test_loader, model):
@@ -64,15 +84,22 @@ def evaluate_test(test_loader, model):
     with torch.no_grad():
         for i_batch, data in enumerate(test_loader):
             mri = data['mri']
-            av45 = data['av45']
-            fdg = data['fdg']
-            gene = data['gene']
-            label = data['label']
+            # av45 = data['av45']
+            # fdg = data['fdg']
+            # gene = data['gene']
+            # label = data['label']
+            #
+            # mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(device), label.to(
+            #     device)
+            # outputs = model(mri, av45, fdg, gene)
+            # calculate_three_metric(outputs, label)
 
-            mri, av45, fdg, gene, label = mri.to(device), av45.to(device), fdg.to(device), gene.to(device), label.to(
-                device)
-            outputs = model(mri, av45, fdg, gene)
-            calculate_three_metric(outputs, label)
+            ct = data['ct']
+            clinical = data['clinical']
+            label = data['label']
+            mri, ct, clinical, label = mri.to(device), ct.to(device), clinical.to(device), label.to(device)
+            outputs = model(mri, ct, clinical)
+            calculate_metric(outputs, label)
 
 
 if __name__ == '__main__':
@@ -81,10 +108,14 @@ if __name__ == '__main__':
     # valid_data = ADNI_Dataset(random_seed=1, mode='val')
     # test_data = ADNI_Dataset(random_seed=1, mode='test')
 
-    # three class
-    train_data = ADNI_three_Dataset(random_seed=2, mode='train')
-    valid_data = ADNI_three_Dataset(random_seed=2, mode='val')
-    test_data = ADNI_three_Dataset(random_seed=2, mode='test')
+    # train_data = ADNI_three_Dataset(random_seed=2, mode='train')
+    # valid_data = ADNI_three_Dataset(random_seed=2, mode='val')
+    # test_data = ADNI_three_Dataset(random_seed=2, mode='test')
+
+    # In-house data
+    train_data = My_Dataset(random_seed=1, mode='train')
+    valid_data = My_Dataset(random_seed=1, mode='val')
+    test_data = My_Dataset(random_seed=1, mode='test')
 
     if torch.cuda.is_available():
         g_cuda = torch.Generator(device='cuda')

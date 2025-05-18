@@ -3,13 +3,15 @@ import argparse
 from src.utils import *
 from torch.utils.data import DataLoader
 from src import train
-from src.preprocess_data import ADNI_Dataset, ADNI_three_Dataset
+from src.preprocess_data import ADNI_Dataset, ADNI_three_Dataset, My_Dataset
+import pandas as pd
 
 parser = argparse.ArgumentParser(description='Alzheimer Analysis')
 parser.add_argument('-f', default='', type=str)
 
 # Model
-parser.add_argument('--model', type=str, default='MCIE')
+parser.add_argument('--model', type=str, default='MCENet', help='MCENet or MCENet_My')
+parser.add_argument('--dataset', type=str, default='ADNI', help='ADNI or My')
 
 # hyperparameter
 parser.add_argument('--nlevels', type=int, default=2, help='the layers of cross-modal information enhancement module')
@@ -26,13 +28,15 @@ parser.add_argument('--seed', type=int, default=1, help='random seed')
 parser.add_argument('--classes', type=int, default=2, help='the number of class 2 or 3')
 parser.add_argument('--group', type=int, default=0, help='different group')
 parser.add_argument('--no_cuda', action='store_true')
-parser.add_argument('--name', type=str, default='MCIE')
+parser.add_argument('--name', type=str, default='MCENet')
 
 # Cross-Modal Information Enhancement Module
 parser.add_argument('--mri', default=True, help='use Cross-Modal Information Enhancement Module to enhance MRI')
 parser.add_argument('--av45', default=True, help='use Cross-Modal Information Enhancement Module to enhance AV45-PET')
 parser.add_argument('--fdg', default=True, help='use Cross-Modal Information Enhancement Module to enhance FDG-PET')
 parser.add_argument('--gene', default=True, help='use Cross-Modal Information Enhancement Module to enhance Gene')
+parser.add_argument('--ct', default=True, help='use Cross-Modal Information Enhancement Module to enhance CT')
+parser.add_argument('--clinical', default=True, help='use Cross-Modal Information Enhancement Module to enhance Clinical')
 parser.add_argument('--attn_dropout', type=float, default=0.1, help='attention dropout')
 parser.add_argument('--relu_dropout', type=float, default=0.1, help='relu dropout')
 parser.add_argument('--embed_dropout', type=float, default=0.25, help='embedding dropout')
@@ -53,18 +57,25 @@ if torch.cuda.is_available():
         use_cuda = True
 
 # ---------------------Load dataset---------------------
-if args.classes == 2:
-    # two class
-    train_data = ADNI_Dataset(random_seed=args.seed, mode='train', group=args.group)
-    valid_data = ADNI_Dataset(random_seed=args.seed, mode='val', group=args.group)
-    test_data = ADNI_Dataset(random_seed=args.seed, mode='test', group=args.group)
-elif args.classes == 3:
-    # three class
-    train_data = ADNI_three_Dataset(random_seed=args.seed, mode='train', group=args.group)
-    valid_data = ADNI_three_Dataset(random_seed=args.seed, mode='val', group=args.group)
-    test_data = ADNI_three_Dataset(random_seed=args.seed, mode='test', group=args.group)
+if args.dataset == 'ADNI':
+    if args.classes == 2:
+        # two class
+        train_data = ADNI_Dataset(random_seed=args.seed, mode='train', group=args.group)
+        valid_data = ADNI_Dataset(random_seed=args.seed, mode='val', group=args.group)
+        test_data = ADNI_Dataset(random_seed=args.seed, mode='test', group=args.group)
+    elif args.classes == 3:
+        # three class
+        train_data = ADNI_three_Dataset(random_seed=args.seed, mode='train', group=args.group)
+        valid_data = ADNI_three_Dataset(random_seed=args.seed, mode='val', group=args.group)
+        test_data = ADNI_three_Dataset(random_seed=args.seed, mode='test', group=args.group)
+    else:
+        print("unknown classes")
+elif args.dataset == 'My':
+    train_data = My_Dataset(random_seed=args.seed, mode='train', group=args.group)
+    valid_data = My_Dataset(random_seed=args.seed, mode='val', group=args.group)
+    test_data = My_Dataset(random_seed=args.seed, mode='test', group=args.group)
 else:
-    print("unknown classes")
+    print("unknown dataset")
 
 if torch.cuda.is_available():
     g_cuda = torch.Generator(device='cuda')
@@ -76,7 +87,12 @@ test_loader = DataLoader(test_data, batch_size=args.batch_size, shuffle=True, ge
 
 # ---------------------Model hyperparameters---------------------
 hyp_params = args
-hyp_params.orig_d_m, hyp_params.orig_d_a, hyp_params.orig_d_f, hyp_params.orig_d_g = 140, 140, 140, 100
+if hyp_params.dataset == 'ADNI':
+    hyp_params.orig_d_m, hyp_params.orig_d_a, hyp_params.orig_d_f, hyp_params.orig_d_g = 140, 140, 140, 100
+elif hyp_params.dataset == 'My':
+    hyp_params.orig_d_m, hyp_params.orig_d_t, hyp_params.orig_d_c = 140, 140, 10
+else:
+    print("unknown dataset")
 hyp_params.layers = args.nlevels
 hyp_params.use_cuda = use_cuda
 hyp_params.when = args.when

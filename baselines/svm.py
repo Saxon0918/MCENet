@@ -1,4 +1,4 @@
-from src.preprocess_data import ADNI_Dataset, ADNI_three_Dataset
+from src.preprocess_data import ADNI_Dataset, ADNI_three_Dataset, My_Dataset
 import torch
 from torch.utils.data import DataLoader
 import torch.nn as nn
@@ -14,13 +14,22 @@ def loader_to_numpy(data_loader):
     Y = []
     for i_batch, data in enumerate(data_loader):
         mri = data['mri']
-        av45 = data['av45']
-        fdg = data['fdg']
-        gene = data['gene']
+        # av45 = data['av45']
+        # fdg = data['fdg']
+        # gene = data['gene']
+        # label = data['label']
+        # mri, av45, fdg, gene = mri.cpu().numpy(), av45.cpu().numpy(), fdg.cpu().numpy(), gene.cpu().numpy()
+        # label = torch.argmax(label, dim=1).cpu().numpy()
+        # X.append(np.concatenate([mri, av45, fdg, gene], axis=1))
+        # Y.append(label)
+
+        ct = data['ct']
+        clinical = data['clinical']
         label = data['label']
-        mri, av45, fdg, gene = mri.cpu().numpy(), av45.cpu().numpy(), fdg.cpu().numpy(), gene.cpu().numpy()
-        label = torch.argmax(label, dim=1).cpu().numpy()
-        X.append(np.concatenate([mri, av45, fdg, gene], axis=1))
+        mri, ct, clinical = mri.cpu().numpy(), ct.cpu().numpy(), clinical.cpu().numpy()
+        # label = torch.argmax(label, dim=1).cpu().numpy()
+        label = label.squeeze().cpu().numpy()
+        X.append(np.concatenate([mri, ct, clinical], axis=1))
         Y.append(label)
     return np.vstack(X), np.hstack(Y)
 
@@ -50,7 +59,7 @@ def evaluate_three_svm(X, Y, model):
         tn = np.sum(cm) - (np.sum(cm[i, :]) + np.sum(cm[:, i]) - cm[i, i])
         fp = np.sum(cm[:, i]) - cm[i, i]
         fn = np.sum(cm[i, :]) - cm[i, i]
-        tp = cm[i, i]  # 真阳性
+        tp = cm[i, i]
 
         spe = tn / (tn + fp) if (tn + fp) != 0 else 0
         sen = tp / (tp + fn) if (tp + fn) != 0 else 0
@@ -72,9 +81,13 @@ if __name__ == '__main__':
     # test_data = ADNI_Dataset(random_seed=1111, mode='test')
 
     # three class
-    train_data = ADNI_three_Dataset(random_seed=11, mode='train')
-    valid_data = ADNI_three_Dataset(random_seed=11, mode='val')
-    test_data = ADNI_three_Dataset(random_seed=11, mode='test')
+    # train_data = ADNI_three_Dataset(random_seed=11, mode='train')
+    # valid_data = ADNI_three_Dataset(random_seed=11, mode='val')
+    # test_data = ADNI_three_Dataset(random_seed=11, mode='test')
+
+    train_data = My_Dataset(random_seed=6, mode='train')
+    valid_data = My_Dataset(random_seed=6, mode='val')
+    test_data = My_Dataset(random_seed=6, mode='test')
 
     if torch.cuda.is_available():
         g_cuda = torch.Generator(device='cuda')
@@ -95,13 +108,13 @@ if __name__ == '__main__':
     svm_model.fit(X_train, Y_train)
 
     print("Training Set Evaluation:")
-    # evaluate_svm(X_train, Y_train, svm_model)
-    evaluate_three_svm(X_train, Y_train, svm_model)
+    evaluate_svm(X_train, Y_train, svm_model)
+    # evaluate_three_svm(X_train, Y_train, svm_model)
 
     print("Validation Set Evaluation:")
-    # evaluate_svm(X_valid, Y_valid, svm_model)
-    evaluate_three_svm(X_valid, Y_valid, svm_model)
+    evaluate_svm(X_valid, Y_valid, svm_model)
+    # evaluate_three_svm(X_valid, Y_valid, svm_model)
 
     print("Test Set Evaluation:")
-    # evaluate_svm(X_test, Y_test, svm_model)
-    evaluate_three_svm(X_test, Y_test, svm_model)
+    evaluate_svm(X_test, Y_test, svm_model)
+    # evaluate_three_svm(X_test, Y_test, svm_model)
