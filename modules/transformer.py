@@ -42,7 +42,7 @@ class TransformerEncoder(nn.Module):
 
         intermediates = [x]
         for layer in self.layers:
-            # cross-modal or single-modal
+            # multi-modal or single-modal
             if x_in_k is not None and x_in_v is not None:
                 x = layer(x, x_k, x_v)
             else:

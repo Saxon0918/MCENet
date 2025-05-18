@@ -29,7 +29,7 @@ class MCENet(nn.Module):
         self.proj_f = nn.Linear(self.orig_d_f, self.d_f)  # 140->40
         self.proj_g = nn.Linear(self.orig_d_g, self.d_g)  # 140->40
 
-        # Cross-Modal Information Enhancement Module
+        # MultiModal Enhancement Module
         if self.mri:
             self.trans_m_with_a = self.get_network(self_type='ma')  # 40->40
             self.trans_m_with_f = self.get_network(self_type='mf')  # 40->40
@@ -94,7 +94,7 @@ class MCENet(nn.Module):
         proj_x_f = x_f if self.orig_d_f == self.d_f else self.proj_f(x_f)
         proj_x_g = x_g if self.orig_d_g == self.d_g else self.proj_g(x_g)
 
-        # Cross-Modal Information Enhancement Module and Transformer
+        # MultiModal Enhancement Module and Transformer
         if self.mri:
             h_m_with_ma = self.trans_m_with_a(proj_x_m, proj_x_a, proj_x_a)
             h_m_with_maf = self.trans_m_with_f(h_m_with_ma, proj_x_f, proj_x_f)
@@ -167,7 +167,7 @@ class MCENet_My(nn.Module):
         self.proj_t = nn.Linear(self.orig_d_t, self.d_t)  # 140->40
         self.proj_c = nn.Linear(self.orig_d_c, self.d_c)  # 10->40
 
-        # Cross-Modal Information Enhancement Module
+        # MultiModal Enhancement Module
         if self.mri:
             self.trans_m_with_t = self.get_network(self_type='mt')  # 40->40
             self.trans_m_with_c = self.get_network(self_type='mc')  # 40->40
@@ -223,7 +223,7 @@ class MCENet_My(nn.Module):
         proj_x_t = x_t if self.orig_d_t == self.d_t else self.proj_t(proj_x_t)
         proj_x_c = x_c if self.orig_d_c == self.d_c else self.proj_c(proj_x_c)
 
-        # Cross-Modal Information Enhancement Module and Transformer
+        # MultiModal Enhancement Module and Transformer
         if self.mri:
             h_m_with_mt = self.trans_m_with_t(proj_x_m, proj_x_t, proj_x_t)
             h_m_with_mtc = self.trans_m_with_c(h_m_with_mt, proj_x_c, proj_x_c)

@@ -14,7 +14,7 @@ parser.add_argument('--model', type=str, default='MCENet', help='MCENet or MCENe
 parser.add_argument('--dataset', type=str, default='ADNI', help='ADNI or My')
 
 # hyperparameter
-parser.add_argument('--nlevels', type=int, default=2, help='the layers of cross-modal information enhancement module')
+parser.add_argument('--nlevels', type=int, default=2, help='the layers of MultiModal Enhancement Module')
 parser.add_argument('--num_heads', type=int, default=8, help='number of heads')
 parser.add_argument('--batch_size', type=int, default=16, help='batch size')
 parser.add_argument('--clip', type=float, default=0.8, help='gradient clip value')
@@ -30,13 +30,13 @@ parser.add_argument('--group', type=int, default=0, help='different group')
 parser.add_argument('--no_cuda', action='store_true')
 parser.add_argument('--name', type=str, default='MCENet')
 
-# Cross-Modal Information Enhancement Module
-parser.add_argument('--mri', default=True, help='use Cross-Modal Information Enhancement Module to enhance MRI')
-parser.add_argument('--av45', default=True, help='use Cross-Modal Information Enhancement Module to enhance AV45-PET')
-parser.add_argument('--fdg', default=True, help='use Cross-Modal Information Enhancement Module to enhance FDG-PET')
-parser.add_argument('--gene', default=True, help='use Cross-Modal Information Enhancement Module to enhance Gene')
-parser.add_argument('--ct', default=True, help='use Cross-Modal Information Enhancement Module to enhance CT')
-parser.add_argument('--clinical', default=True, help='use Cross-Modal Information Enhancement Module to enhance Clinical')
+# MultiModal Enhancement Module
+parser.add_argument('--mri', default=True, help='use MultiModal Enhancement Module to enhance MRI')
+parser.add_argument('--av45', default=True, help='use MultiModal Enhancement Module to enhance AV45-PET')
+parser.add_argument('--fdg', default=True, help='use MultiModal Enhancement Module to enhance FDG-PET')
+parser.add_argument('--gene', default=True, help='use MultiModal Enhancement Module to enhance Gene')
+parser.add_argument('--ct', default=True, help='use MultiModal Enhancement Module to enhance CT')
+parser.add_argument('--clinical', default=True, help='use MultiModal Enhancement Module to enhance Clinical')
 parser.add_argument('--attn_dropout', type=float, default=0.1, help='attention dropout')
 parser.add_argument('--relu_dropout', type=float, default=0.1, help='relu dropout')
 parser.add_argument('--embed_dropout', type=float, default=0.25, help='embedding dropout')
