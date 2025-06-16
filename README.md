@@ -16,7 +16,7 @@ This repository also includes several Python files used for training the model. 
 ***src***
 
 - eval_metrics.py: Calculate evaluation metrics for model performance.
-- preprocess_data.py: Preprocess the IN-HOUSE and ADNI dataset by standardizing, registering, and segmenting the data for further
+- preprocess_data.py: Preprocess the East Asian and North American dataset by standardizing, registering, and segmenting the data for further
   analysis.
 - train.py: Train the model using the preprocessed data and specified parameters.
 - utils.py: Provide utility functions for model management.
